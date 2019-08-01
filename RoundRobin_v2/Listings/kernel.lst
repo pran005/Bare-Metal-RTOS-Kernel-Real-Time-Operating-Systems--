@@ -1,0 +1,192 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000                 AREA             | .text|,CODE,READONLY,ALIGN=2
+    2 00000000                 THUMB
+    3 00000000                 EXTERN           current_thread ;current_thread 
+                                                            = &current_tcb  
+    4 00000000                 EXTERN           addr
+    5 00000000                 IMPORT           OS_sched
+    6 00000000                 EXPORT           PendSV_Handler
+    7 00000000                 EXPORT           Kernel_Launch_scheduler
+    8 00000000         
+    9 00000000         
+   10 00000000         PendSV_Handler                       ; Saves R0-R3 , R12
+                                                             , LR ,PC & PSR Reg
+                                                            ister -> EXCEPTION 
+                                                            Stack Frame 
+   11 00000000         
+   12 00000000         ; Save Previous Context
+   13 00000000 B500            PUSH             {LR}
+   14 00000002         
+   15 00000002 4811            LDR              R0,=OS_sched
+   16 00000004 4780            BLX              R0
+   17 00000006         
+   18 00000006 F85D EB04       POP              {LR}
+   19 0000000A         
+   20 0000000A B672            CPSID            I           ; Change Processor 
+                                                            State -> Disable In
+                                                            terrupts
+   21 0000000C E92D 0FF0       PUSH             {R4-R11}    ; Push registers on
+                                                             the stack except t
+                                                            he stack frame regi
+                                                            sters
+   22 00000010 480E            LDR              R0,=current_thread ; R0 = &curr
+                                                            ent_thread, Points 
+                                                            to current thread's
+                                                             TCB, whose quanta 
+                                                            has exhausted, so w
+                                                            e are saving the co
+                                                            ntext 
+   23 00000012 6801            LDR              R1,[R0]     ; R1 = current_thre
+                                                            ad
+   24 00000014 F8C1 D000       STR              SP,[R1]     ; *current_thread/S
+                                                            tackPtr = SP => Sav
+                                                            es Stack Pointer va
+                                                            lue at current_thre
+                                                            ad addr which is St
+                                                            ackPtr 
+   25 00000018         
+   26 00000018         ; Load next thread & it's stack 
+   27 00000018         
+   28 00000018         ;LDR   LR,=addr
+   29 00000018         
+   30 00000018 6849            LDR              R1,[R1,#4]  ; R1 = current_thre
+                                                            ad -> nextpt ;  nav
+                                                            igates to 2nd entry
+                                                             of tcb which is *n
+                                                            ext_thread
+   31 0000001A 6001            STR              R1,[R0]     ; current_thread = 
+                                                            R1 ; Store next_thr
+                                                            ead in current_thre
+                                                            ad , current_thread
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+                                                             = next_thread  
+   32 0000001C         ; above two mean => current_thread = current_thread -> n
+                       ext_thread ; dencing thru Linked list
+   33 0000001C         
+   34 0000001C F8D1 D000       LDR              SP,[R1]     ; SP = current_thre
+                                                            ad -> stackptr ; 
+   35 00000020         
+   36 00000020         ; Load new Context
+   37 00000020         
+   38 00000020 E8BD 0FF0       POP              {R4-R11}
+   39 00000024 B662            CPSIE            I           ; Change Processor 
+                                                            State -> Enable Int
+                                                            errupts
+   40 00000026 4770            BX               LR          ; Restores the new 
+                                                            thread's registers 
+                                                            , including PC , en
+                                                            abling new thread's
+                                                             execution
+   41 00000028         
+   42 00000028         
+   43 00000028         Kernel_Launch_scheduler
+   44 00000028         
+   45 00000028         ; set SP to SP of first thread 
+   46 00000028         
+   47 00000028 4808            LDR              R0,=current_thread
+   48 0000002A 6802            LDR              R2,[R0]     ; R2 = current_thre
+                                                            ad
+   49 0000002C F8D2 D000       LDR              SP,[R2]     ; SP = current_thre
+                                                            ad -> StackPtr
+   50 00000030 E8BD 0FF0       POP              {R4-R11}
+   51 00000034 BC0F            POP              {R0-R3}
+   52 00000036 F85D CB04       POP              {R12}
+   53 0000003A B001            ADD              SP,SP,#4    ; ignore LR 
+   54 0000003C F85D EB04       POP              {LR}        ; POP PC into LR 
+   55 00000040 B001            ADD              SP,SP,#4    ; ignore xPSR
+   56 00000042 B662            CPSIE            I
+   57 00000044 4770            BX               LR
+   58 00000046         
+   59 00000046         AlIGN
+   60 00000046         
+   61 00000046                 END
+              00 00 00000000 
+              00000000 
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp --apcs=int
+erwork --depend=.\objects\kernel_1.d -o.\objects\kernel_1.o -I.\RTE\_Target_1 -
+IE:\Keil_v5\ARM\PACK\ARM\CMSIS\5.3.0\CMSIS\Include -IE:\Keil_v5\ARM\PACK\Keil\T
+M4C_DFP\1.1.0\Device\Include\TM4C123 --predefine="__EVAL SETA 1" --predefine="_
+_UVISION_VERSION SETA 525" --predefine="_RTE_ SETA 1" --predefine="TM4C123GH6PM
+ SETA 1" --list=.\listings\kernel.lst kernel.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+ .text 00000000
+
+Symbol:  .text
+   Definitions
+      At line 1 in file kernel.s
+   Uses
+      None
+Comment:  .text unused
+AlIGN 00000046
+
+Symbol: AlIGN
+   Definitions
+      At line 59 in file kernel.s
+   Uses
+      None
+Comment: AlIGN unused
+Kernel_Launch_scheduler 00000028
+
+Symbol: Kernel_Launch_scheduler
+   Definitions
+      At line 43 in file kernel.s
+   Uses
+      At line 7 in file kernel.s
+Comment: Kernel_Launch_scheduler used once
+PendSV_Handler 00000000
+
+Symbol: PendSV_Handler
+   Definitions
+      At line 10 in file kernel.s
+   Uses
+      At line 6 in file kernel.s
+Comment: PendSV_Handler used once
+4 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+OS_sched 00000000
+
+Symbol: OS_sched
+   Definitions
+      At line 5 in file kernel.s
+   Uses
+      At line 15 in file kernel.s
+Comment: OS_sched used once
+addr 00000000
+
+Symbol: addr
+   Definitions
+      At line 4 in file kernel.s
+   Uses
+      None
+Comment: addr unused
+current_thread 00000000
+
+Symbol: current_thread
+   Definitions
+      At line 3 in file kernel.s
+   Uses
+      At line 22 in file kernel.s
+      At line 47 in file kernel.s
+
+3 symbols
+344 symbols in table
