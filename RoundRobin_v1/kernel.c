@@ -6,10 +6,10 @@
 * 
 *	Specifications : 
 * 					1. Round Robin Scheduler (Pre-emptive)
-*						2. SysTick handles Scheduling 
+*					2. SysTick handles Scheduling 
 * 					3. No Priority based Scheduling
-*						4. Pre-defined Quanta in ms
-*						5. No dynamic task creation
+*					4. Pre-defined Quanta in ms
+*					5. No dynamic task creation
 *						
 *
 * Copyright (C) 2019 Pran Labs. All Rights Reserved.
